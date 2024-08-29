@@ -22,6 +22,7 @@ Uses ModelMetadataType or MetadataType to apply attributes to your subset class.
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
+    <PackageProjectUrl>https://github.com/NickScarpitti/subset-model-binder</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
