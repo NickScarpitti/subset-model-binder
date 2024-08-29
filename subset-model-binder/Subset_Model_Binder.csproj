@@ -14,7 +14,7 @@
     <Authors>Nick_Scarpitti</Authors>
     <Description>A code generator that enforces a class to be only a subset of another class, with no extra properties or properties of incorrect types.
 Uses ModelMetadataType or MetadataType to apply attributes to your subset class.</Description>
-    <PackageIcon>TransparentTTLogo.png</PackageIcon>
+    <PackageIcon>TTLogo.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
     <PackageTags>generator;model;binding;source generator;model binding;mvc</PackageTags>
     <AssemblyVersion>$(Version)</AssemblyVersion>
