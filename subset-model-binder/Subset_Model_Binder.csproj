@@ -9,7 +9,7 @@
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Subset Model Binder</Title>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <Authors>Nick_Scarpitti</Authors>
     <Description>A code generator that enforces a class to be only a subset of another class, with no extra properties or properties of incorrect types.
 Uses ModelMetadataType or MetadataType to apply attributes to your subset class.</Description>
