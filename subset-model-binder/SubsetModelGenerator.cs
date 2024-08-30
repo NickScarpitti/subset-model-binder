@@ -8,14 +8,15 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Subset_Model_Binder;
 
-[Generator]
+[Generator(LanguageNames.CSharp)]
 public class SubsetValidatorGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         IncrementalValuesProvider<ClassDeclarationSyntax> classDeclarations = context.SyntaxProvider
-            .CreateSyntaxProvider(
-                predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
+        .ForAttributeWithMetadataName( //Used to be CreateSyntaxProvider
+                "Subset_Model_Binder.SubsetOfAttribute",
+                predicate: (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
                 transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx))
             .Where(static m => m is not null)!;
 
@@ -25,12 +26,9 @@ public class SubsetValidatorGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(compilationAndClasses, static (spc, source) => Execute(source.Item1, source.Item2, spc));
     }
 
-    private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
-        => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 };
-
-    private static ClassDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
+    private static ClassDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorAttributeSyntaxContext context) //Used to be GeneratorSyntaxContext
     {
-        ClassDeclarationSyntax classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+        ClassDeclarationSyntax classDeclarationSyntax = (ClassDeclarationSyntax)context.TargetNode;//.Node;
         foreach (AttributeListSyntax attributeListSyntax in classDeclarationSyntax.AttributeLists)
         {
             foreach (AttributeSyntax attributeSyntax in attributeListSyntax.Attributes)
@@ -40,7 +38,7 @@ public class SubsetValidatorGenerator : IIncrementalGenerator
                     INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
                     string fullName = attributeContainingTypeSymbol.ToDisplayString();
 
-                    if (fullName == "BoundModelSourceGen.SubsetOfAttribute")
+                    if (fullName == "Subset_Model_Binder.SubsetOfAttribute")
                     {
                         return classDeclarationSyntax;
                     }
@@ -197,7 +195,7 @@ public class SubsetValidatorGenerator : IIncrementalGenerator
 //        }
 //    }
 
-//    private string GenerateAttributeCode(INamedTypeSymbol subsetClassSymbol, INamedTypeSymbol originalTypeSymbol, bool isMvcApp)
+//    private static string GenerateAttributeCode(INamedTypeSymbol subsetClassSymbol, INamedTypeSymbol originalTypeSymbol, bool isMvcApp)
 //    {
 //        StringBuilder sb = new();
 //        sb.AppendLine("#nullable enable");
