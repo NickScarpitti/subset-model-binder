@@ -5,12 +5,12 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-    <ApplicationIcon>TT-Favicon.ico</ApplicationIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Subset Model Binder</Title>
-    <Version>1.0.0</Version>
-    <OutputType>Analyzer</OutputType>
+    <Version>1.0.3</Version>
+    <!--<OutputType>Analyzer</OutputType>-->
     <Authors>Nick_Scarpitti</Authors>
     <Description>A code generator that enforces a class to be only a subset of another class, with no extra properties or properties of incorrect types.
 Uses ModelMetadataType or MetadataType to apply attributes to your subset class.</Description>
@@ -35,6 +35,13 @@ Uses ModelMetadataType or MetadataType to apply attributes to your subset class.
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="TTLogo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -43,10 +50,7 @@ Uses ModelMetadataType or MetadataType to apply attributes to your subset class.
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="TTLogo.png">
-      <PackagePath>\</PackagePath>
-      <Pack>True</Pack>
-    </None>
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
 </Project>
