@@ -67,7 +67,6 @@ public class SubsetValidatorGenerator : IIncrementalGenerator
             // Check if the class is marked as partial
             if (!subsetClass.Modifiers.Any(SyntaxKind.PartialKeyword))
             {
-                //ReportDiagnostic(context, "SG0003", "Class must be partial", $"The class '{subsetClassSymbol.Name}' decorated with SubsetOf attribute must be marked as partial", subsetClass.Identifier.GetLocation());
                 ReportDiagnosticOnce(context, "SG0003", "Class must be partial", $"The class '{subsetClassSymbol.Name}' decorated with SubsetOf attribute must be marked as partial", subsetClass.Identifier.GetLocation(), reportedDiagnostics);
             }
 
@@ -77,28 +76,27 @@ public class SubsetValidatorGenerator : IIncrementalGenerator
 
             if (subsetOfAttribute.ConstructorArguments[0].Value is not INamedTypeSymbol originalTypeSymbol) continue;
 
+            bool isMvcApp = subsetOfAttribute.ConstructorArguments.Length > 1 && (bool)subsetOfAttribute.ConstructorArguments[1].Value!;
+            bool allowInheritedProperties = subsetOfAttribute.ConstructorArguments.Length > 2 && (bool)subsetOfAttribute.ConstructorArguments[2].Value!;
+
+            // Get all properties of the original type, including inherited ones
+            Dictionary<string, IPropertySymbol> originalProperties = GetAllProperties(originalTypeSymbol, allowInheritedProperties);
+
             foreach (IPropertySymbol subsetProperty in subsetClassSymbol.GetMembers().OfType<IPropertySymbol>())
             {
-                IPropertySymbol originalProperty = originalTypeSymbol.GetMembers(subsetProperty.Name).OfType<IPropertySymbol>().FirstOrDefault();
-
-                if (originalProperty == null)
+                if (!originalProperties.TryGetValue(subsetProperty.Name, out IPropertySymbol? originalProperty))
                 {
-                    //ReportDiagnostic(context, "SG0002", "Property not found", $"Property '{subsetProperty.Name}' is not present in the parent class '{originalTypeSymbol.Name}'", subsetProperty.Locations.FirstOrDefault());
-                    ReportDiagnosticOnce(context, "SG0002", "Property not found", $"Property '{subsetProperty.Name}' is not present in the parent class '{originalTypeSymbol.Name}'", subsetProperty.Locations.FirstOrDefault(), reportedDiagnostics);
+                    ReportDiagnosticOnce(context, "SG0002", "Property not found", $"Property '{subsetProperty.Name}' is not present in the parent class '{originalTypeSymbol.Name}'" +
+                        (allowInheritedProperties ? " or its base classes" : ""), subsetProperty.Locations.FirstOrDefault(), reportedDiagnostics);
                 }
                 else if (!SymbolEqualityComparer.Default.Equals(subsetProperty.Type, originalProperty.Type))
                 {
-                    //ReportDiagnostic(context, "SG0001", "Property type mismatch",
-                    //    $"Property '{subsetProperty.Name}' has a different type than in the original class '{originalTypeSymbol.Name}'. Expected: {originalProperty.Type.Name}, Found: {subsetProperty.Type.Name}",
-                    //    subsetProperty.Locations.FirstOrDefault());
-
-                    ReportDiagnosticOnce(context, "SG0001", "Property type mismatch",
-                        $"Property '{subsetProperty.Name}' has a different type than in the original class '{originalTypeSymbol.Name}'. Expected: {originalProperty.Type.Name}, Found: {subsetProperty.Type.Name}",
-                        subsetProperty.Locations.FirstOrDefault(), reportedDiagnostics);
+                    ReportDiagnosticOnce(context, "SG0001", "Property type mismatch", $"Property '{subsetProperty.Name}' has a different type than in the original class '{originalTypeSymbol.Name}'" +
+                        (allowInheritedProperties ? " or its base classes" : "") + $". Expected: {originalProperty.Type.Name}, Found: {subsetProperty.Type.Name}", subsetProperty.Locations.FirstOrDefault(),
+                        reportedDiagnostics);
                 }
             }
 
-            bool isMvcApp = subsetOfAttribute.ConstructorArguments.Length > 1 && (bool)subsetOfAttribute.ConstructorArguments[1].Value!;
             string attributeCode = GenerateAttributeCode(subsetClassSymbol, originalTypeSymbol, isMvcApp);
             context.AddSource($"{subsetClassSymbol.Name}_Attributes.g.cs", SourceText.From(attributeCode, Encoding.UTF8));
         }
@@ -129,6 +127,32 @@ public class SubsetValidatorGenerator : IIncrementalGenerator
             DiagnosticDescriptor descriptor = new(id, title, message, nameof(SubsetValidatorGenerator), DiagnosticSeverity.Error, isEnabledByDefault: true);
             context.ReportDiagnostic(Diagnostic.Create(descriptor, location ?? Location.None));
         }
+    }
+
+    private static Dictionary<string, IPropertySymbol> GetAllProperties(INamedTypeSymbol type, bool includeInheritedProperties)
+    {
+        Dictionary<string, IPropertySymbol> properties = [];
+        INamedTypeSymbol? currentType = type;
+
+        while (currentType != null)
+        {
+            foreach (IPropertySymbol member in currentType.GetMembers().OfType<IPropertySymbol>())
+            {
+                if (!properties.ContainsKey(member.Name))
+                {
+                    properties[member.Name] = member;
+                }
+            }
+
+            if (!includeInheritedProperties)
+            {
+                break; // Stop after processing the current type if inherited properties are not allowed
+            }
+
+            currentType = currentType.BaseType;
+        }
+
+        return properties;
     }
 }
 
